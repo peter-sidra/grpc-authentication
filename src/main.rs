@@ -8,15 +8,31 @@ mod services;
 
 use config_loader::Config;
 use config_loader::ConfigLoader;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
+use diesel::SqliteConnection;
 use services::grpc_services::authentication::{
     proto_gen::authenticator_server::AuthenticatorServer, MyAuthenticator,
 };
 use services::grpc_services::helloworld::{proto_gen::greeter_server::GreeterServer, MyGreeter};
+use services::user_repos::database_user_repo::DatabaseUserRepo;
+use shaku::module;
 use state::LocalStorage;
+use state::Storage;
 use tonic::transport::Server;
 use tonic::transport::ServerTlsConfig;
 
+// Global config
 static CONFIG: LocalStorage<Config> = LocalStorage::new();
+
+// Init DI container
+module! {
+    AuthModule{
+        components = [DatabaseUserRepo],
+        providers = [],
+    }
+}
+static AUTH_MODULE: Storage<AuthModule> = Storage::new();
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,6 +40,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     CONFIG.set(|| ConfigLoader::load_config(config_loader::Profiles::DEV));
     let config = CONFIG.get();
     println!("Server config: \n{:?}", config);
+
+    // Create the DB connection pool
+    let pool = Pool::builder()
+        .build(ConnectionManager::<SqliteConnection>::new(
+            CONFIG.get().database_url.as_str(),
+        ))
+        .expect("Error while creating the database connection pool");
+
+    // Wire up the DI container
+    use crate::services::user_repos::database_user_repo::DatabaseUserRepoParameters;
+    AUTH_MODULE.set(
+        AuthModule::builder()
+            .with_component_parameters::<DatabaseUserRepo>(DatabaseUserRepoParameters {
+                db_connection_pool: pool,
+            })
+            .build(),
+    );
 
     // Build the server
     let addr = config.server_addr.parse()?;

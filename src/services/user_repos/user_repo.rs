@@ -1,10 +1,11 @@
+use shaku::Interface;
 use uuid::Uuid;
 
 use crate::models::user::{NewUser, User};
 
 #[tonic::async_trait]
-trait UserRepo {
-    async fn get_by_id(id: Uuid) -> User;
-    async fn get_by_email(email: String) -> User;
-    async fn create(user: NewUser);
+pub trait UserRepo: Interface {
+    async fn get_by_id(&self, id: Uuid) -> Result<User, diesel::result::Error>;
+    async fn get_by_email(&self, email: String) -> Result<User, diesel::result::Error>;
+    async fn create(&self, user: NewUser) -> Result<usize, diesel::result::Error>;
 }
