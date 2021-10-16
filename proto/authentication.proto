@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package authentication;
+
+service Authenticator {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterResponse {}
