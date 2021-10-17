@@ -15,6 +15,8 @@ use services::grpc_services::authentication::{
     proto_gen::authenticator_server::AuthenticatorServer, MyAuthenticator,
 };
 use services::grpc_services::helloworld::{proto_gen::greeter_server::GreeterServer, MyGreeter};
+use services::password_hashers::scrypt_hasher::ScryptHasher;
+use services::token_generators::jwt_access_token_generator::JwtAccessTokenGenerator;
 use services::user_repos::database_user_repo::DatabaseUserRepo;
 use shaku::module;
 use state::LocalStorage;
@@ -28,7 +30,7 @@ static CONFIG: LocalStorage<Config> = LocalStorage::new();
 // Init DI container
 module! {
     AuthModule{
-        components = [DatabaseUserRepo],
+        components = [DatabaseUserRepo, ScryptHasher, JwtAccessTokenGenerator],
         providers = [],
     }
 }
@@ -49,12 +51,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Error while creating the database connection pool");
 
     // Wire up the DI container
+    use crate::services::token_generators::jwt_access_token_generator::JwtAccessTokenGeneratorParameters;
     use crate::services::user_repos::database_user_repo::DatabaseUserRepoParameters;
     AUTH_MODULE.set(
         AuthModule::builder()
+            // Setup the database user repo
             .with_component_parameters::<DatabaseUserRepo>(DatabaseUserRepoParameters {
                 db_connection_pool: pool,
             })
+            // Setup the access token generator
+            .with_component_parameters::<JwtAccessTokenGenerator>(
+                JwtAccessTokenGeneratorParameters {
+                    issuer: config.jwt_settings.issuer.clone(),
+                    key: jwt_simple::prelude::HS256Key::from_bytes(
+                        config.jwt_settings.access_token_key.as_bytes(),
+                    ),
+                    expiration: config.jwt_settings.access_token_expiration_minutes,
+                },
+            )
             .build(),
     );
 

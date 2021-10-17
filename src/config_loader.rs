@@ -12,6 +12,16 @@ pub struct Config {
     pub server_addr: String,
     pub use_tls: bool,
     pub database_url: String,
+    pub jwt_settings: JwtSettings,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct JwtSettings {
+    pub issuer: String,
+    pub access_token_key: String,
+    pub access_token_expiration_minutes: u32,
+    pub refresh_token_key: String,
+    pub refresh_token_expiration_minutes: u32,
 }
 
 #[non_exhaustive]

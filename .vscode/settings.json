@@ -1,5 +1,5 @@
 {
-	"cSpell.words": ["dotenv", "proto", "shaku"],
+	"cSpell.words": ["dotenv", "Hasher", "proto", "shaku"],
 
 	"rust-analyzer.procMacro.enable": false
 }

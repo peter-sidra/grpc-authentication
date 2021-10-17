@@ -1,0 +1,41 @@
+{
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug executable 'grpc-authentication'",
+			"cargo": {
+				"args": [
+					"build",
+					"--bin=grpc-authentication",
+					"--package=grpc-authentication"
+				],
+				"filter": {
+					"name": "grpc-authentication",
+					"kind": "bin"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug unit tests in executable 'grpc-authentication'",
+			"cargo": {
+				"args": [
+					"test",
+					"--no-run",
+					"--bin=grpc-authentication",
+					"--package=grpc-authentication"
+				],
+				"filter": {
+					"name": "grpc-authentication",
+					"kind": "bin"
+				}
+			},
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		}
+	]
+}

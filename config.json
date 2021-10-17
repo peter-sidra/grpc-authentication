@@ -3,12 +3,26 @@
 		"cert_path": "/etc/letsencrypt/live/grpc-test-ps.westeurope.cloudapp.azure.com/fullchain.pem",
 		"key_path": "/etc/letsencrypt/live/grpc-test-ps.westeurope.cloudapp.azure.com/privkey.pem",
 		"server_addr": "0.0.0.0:50051",
-		"use_tls": true
+		"use_tls": true,
+		"jwt_settings": {
+			"issuer": "http://localhost:5000",
+			"access_token_key": "cneTgPm7QcfRuEt1d0Mb/QfS2OUy95Xap9goBfTAqsY=",
+			"access_token_expiration_minutes": 15,
+			"refresh_token_key": "QAxMM7/oCPoCvYJAn2UDWdYcj+iXFOqKpn+fYu/ADgE=",
+			"refresh_token_expiration_minutes": 43200
+		}
 	},
 	"dev": {
 		"cert_path": "D:/Coding/certs/grpc-test-ps.westeurope.cloudapp.azure.com/fullchain.pem",
 		"key_path": "D:/Coding/certs/grpc-test-ps.westeurope.cloudapp.azure.com/privkey.pem",
 		"server_addr": "0.0.0.0:50051",
-		"use_tls": false
+		"use_tls": false,
+		"jwt_settings": {
+			"issuer": "http://localhost:5000",
+			"access_token_key": "cneTgPm7QcfRuEt1d0Mb/QfS2OUy95Xap9goBfTAqsY=",
+			"access_token_expiration_minutes": 15,
+			"refresh_token_key": "QAxMM7/oCPoCvYJAn2UDWdYcj+iXFOqKpn+fYu/ADgE=",
+			"refresh_token_expiration_minutes": 43200
+		}
 	}
 }
