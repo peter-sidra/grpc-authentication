@@ -3,12 +3,12 @@ pub mod proto_gen {
 }
 
 use crate::{
+    di::AUTH_MODULE,
     models::user::NewUser,
     services::password_hashers::hasher::PasswordHasher as MyPasswordHasher,
     services::{
         token_services::token_authenticator::TokenAuthenticator, user_repos::user_repo::UserRepo,
     },
-    AUTH_MODULE,
 };
 use proto_gen::{
     authenticator_server::Authenticator, LoginRequest, LoginResponse, RegisterRequest,

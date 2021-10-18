@@ -1,23 +1,23 @@
-use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
-use shaku::Component;
-use uuid::Uuid;
-
 use super::user_repo::{Error, UserRepo};
+use crate::connection_pool_wrapper::DBConnectionPool;
 use crate::models::user::{NewUser, User};
 use crate::schema::users;
 use diesel::prelude::*;
+use diesel::r2d2::{ConnectionManager, PooledConnection};
+use shaku::Component;
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Component)]
 #[shaku(interface = UserRepo)]
 pub struct DatabaseUserRepo {
-    db_connection_pool: Pool<ConnectionManager<SqliteConnection>>,
+    #[shaku(inject)]
+    db_connection_pool: Arc<DBConnectionPool>,
 }
 
 impl DatabaseUserRepo {
     fn get_db_connection(&self) -> PooledConnection<ConnectionManager<SqliteConnection>> {
-        self.db_connection_pool
-            .get()
-            .expect("Couldn't aquire a database connection from the pool")
+        self.db_connection_pool.get()
     }
 
     fn map_diesel_err(&self, diesel_err: diesel::result::Error) -> Error {
