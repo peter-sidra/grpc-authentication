@@ -13,6 +13,7 @@ pub struct Config {
     pub use_tls: bool,
     pub database_url: String,
     pub jwt_settings: JwtSettings,
+    pub password_work_factor: u8,
 }
 
 #[derive(Deserialize, Debug)]

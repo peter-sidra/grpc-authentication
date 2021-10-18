@@ -10,7 +10,8 @@
 			"access_token_expiration_minutes": 15,
 			"refresh_token_key": "QAxMM7/oCPoCvYJAn2UDWdYcj+iXFOqKpn+fYu/ADgE=",
 			"refresh_token_expiration_minutes": 43200
-		}
+		},
+		"password_work_factor": 12
 	},
 	"dev": {
 		"cert_path": "D:/Coding/certs/grpc-test-ps.westeurope.cloudapp.azure.com/fullchain.pem",
@@ -23,6 +24,7 @@
 			"access_token_expiration_minutes": 15,
 			"refresh_token_key": "QAxMM7/oCPoCvYJAn2UDWdYcj+iXFOqKpn+fYu/ADgE=",
 			"refresh_token_expiration_minutes": 43200
-		}
+		},
+		"password_work_factor": 4
 	}
 }

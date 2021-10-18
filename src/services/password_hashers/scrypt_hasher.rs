@@ -6,18 +6,20 @@ use shaku::Component;
 
 #[derive(Component)]
 #[shaku(interface = super::hasher::PasswordHasher)]
-pub struct ScryptHasher {}
+pub struct ScryptHasher {
+    work_factor: u8,
+}
 
 #[tonic::async_trait]
 impl super::hasher::PasswordHasher for ScryptHasher {
-    async fn hash_password(&self, password: String) -> String {
+    async fn hash_password(&'static self, password: String) -> String {
         let password_hashing_task = tokio::task::spawn_blocking(move || {
             Scrypt
                 .hash_password_customized(
                     password.as_bytes(),
                     None,
                     None,
-                    scrypt::Params::new(14, 8, 1).unwrap(),
+                    scrypt::Params::new(self.work_factor, 8, 1).unwrap(),
                     SaltString::generate(&mut OsRng).as_salt(),
                 )
                 .expect("Error while calculating password's hash")

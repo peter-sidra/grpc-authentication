@@ -29,6 +29,7 @@ pub static AUTH_MODULE: Storage<AuthModule> = Storage::new();
 
 pub fn di_wireup(config: &Config) {
     // Wire up the DI container
+    use crate::services::password_hashers::scrypt_hasher::ScryptHasherParameters;
     use crate::services::token_services::token_generators::{
         jwt_access_token_generator::JwtAccessTokenGeneratorParameters,
         jwt_refresh_token_generator::JwtRefreshTokenGeneratorParameters,
@@ -36,6 +37,10 @@ pub fn di_wireup(config: &Config) {
     AUTH_MODULE.set(
         AuthModule::builder()
             // Setup the access token generator
+            .with_component_parameters::<DBConnectionPool>(config.database_url.clone())
+            .with_component_parameters::<ScryptHasher>(ScryptHasherParameters {
+                work_factor: config.password_work_factor,
+            })
             .with_component_parameters::<JwtAccessTokenGenerator>(
                 JwtAccessTokenGeneratorParameters {
                     issuer: config.jwt_settings.issuer.clone(),

@@ -4,8 +4,6 @@ use diesel::{
 };
 use shaku::{Component, Module};
 
-use crate::CONFIG;
-
 type Manager = ConnectionManager<SqliteConnection>;
 
 pub struct DBConnectionPool {
@@ -24,24 +22,15 @@ where
 {
     type Interface = DBConnectionPool;
 
-    type Parameters = DBConnectionPool;
+    type Parameters = String;
 
     fn build(
         _context: &mut shaku::ModuleBuildContext<M>,
         params: Self::Parameters,
     ) -> Box<Self::Interface> {
-        Box::new(params)
-    }
-}
-
-impl Default for DBConnectionPool {
-    fn default() -> Self {
         let pool = Pool::builder()
-            .build(ConnectionManager::<SqliteConnection>::new(
-                CONFIG.get().database_url.as_str(),
-            ))
+            .build(ConnectionManager::<SqliteConnection>::new(params.as_str()))
             .expect("Error while creating the database connection pool");
-
-        Self { pool }
+        Box::new(Self { pool })
     }
 }
