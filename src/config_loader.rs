@@ -36,8 +36,10 @@ impl Profiles {
 pub struct ConfigLoader {}
 
 impl ConfigLoader {
-    pub fn load_config(profile: &str) -> Config {
+    pub fn load_config() -> Config {
         dotenv::dotenv().ok();
+
+        let profile = std::env::var("PROFILE").unwrap_or(Profiles::DEV.to_string());
 
         Figment::new()
             .select(profile)

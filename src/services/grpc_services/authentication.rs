@@ -4,10 +4,9 @@ pub mod proto_gen {
 
 use crate::{
     models::user::NewUser,
-    services::user_repos::user_repo::UserRepo,
+    services::password_hashers::hasher::PasswordHasher as MyPasswordHasher,
     services::{
-        password_hashers::hasher::PasswordHasher as MyPasswordHasher,
-        token_generators::access_token_generator::{self, AccessTokenGenerator},
+        token_services::token_authenticator::TokenAuthenticator, user_repos::user_repo::UserRepo,
     },
     AUTH_MODULE,
 };
@@ -77,7 +76,7 @@ impl Authenticator for MyAuthenticator {
         // resolve dependencies from the DI container
         let user_repo: &dyn UserRepo = AUTH_MODULE.get().resolve_ref();
         let password_hasher: &dyn MyPasswordHasher = AUTH_MODULE.get().resolve_ref();
-        let access_token_generator: &dyn AccessTokenGenerator = AUTH_MODULE.get().resolve_ref();
+        let token_authenticator: &dyn TokenAuthenticator = AUTH_MODULE.get().resolve_ref();
 
         let email = &request.get_ref().email;
         let password = &request.get_ref().password;
@@ -98,12 +97,12 @@ impl Authenticator for MyAuthenticator {
             ));
         }
 
-        let token = access_token_generator.generate_token(user);
+        let access_token = token_authenticator.generate_access_token(user);
+        let refresh_token = token_authenticator.generate_refresh_token();
 
         Ok(Response::new(LoginResponse {
-            access_token: token,
-            // !TODO
-            refresh_token: "TODO".to_owned(),
+            access_token,
+            refresh_token,
         }))
     }
 }

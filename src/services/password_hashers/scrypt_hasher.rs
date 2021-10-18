@@ -30,11 +30,18 @@ impl super::hasher::PasswordHasher for ScryptHasher {
     }
 
     async fn verify_password(&self, password: String, hash: String) -> bool {
-        let password_hash = PasswordHash::new(hash.as_str())
-            .expect("Error while converting string hash to PasswordHash");
-        match Scrypt.verify_password(password.as_bytes(), &password_hash) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        let password_verification_task = tokio::task::spawn_blocking(move || {
+            let password_hash = PasswordHash::new(hash.as_str())
+                .expect("Error while converting string hash to PasswordHash");
+
+            match Scrypt.verify_password(password.as_bytes(), &password_hash) {
+                Ok(_) => true,
+                Err(_) => false,
+            }
+        });
+
+        password_verification_task
+            .await
+            .expect("Error while verifying the password")
     }
 }

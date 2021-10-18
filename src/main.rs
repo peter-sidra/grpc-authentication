@@ -16,7 +16,11 @@ use services::grpc_services::authentication::{
 };
 use services::grpc_services::helloworld::{proto_gen::greeter_server::GreeterServer, MyGreeter};
 use services::password_hashers::scrypt_hasher::ScryptHasher;
-use services::token_generators::jwt_access_token_generator::JwtAccessTokenGenerator;
+use services::token_services::token_authenticator::TokenAuthenticatorImpl;
+use services::token_services::token_generators::{
+    jwt_access_token_generator::JwtAccessTokenGenerator,
+    jwt_refresh_token_generator::JwtRefreshTokenGenerator,
+};
 use services::user_repos::database_user_repo::DatabaseUserRepo;
 use shaku::module;
 use state::LocalStorage;
@@ -30,7 +34,7 @@ static CONFIG: LocalStorage<Config> = LocalStorage::new();
 // Init DI container
 module! {
     AuthModule{
-        components = [DatabaseUserRepo, ScryptHasher, JwtAccessTokenGenerator],
+        components = [DatabaseUserRepo, ScryptHasher, JwtAccessTokenGenerator, JwtRefreshTokenGenerator, TokenAuthenticatorImpl],
         providers = [],
     }
 }
@@ -39,7 +43,7 @@ static AUTH_MODULE: Storage<AuthModule> = Storage::new();
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load server configuration from config file
-    CONFIG.set(|| ConfigLoader::load_config(config_loader::Profiles::DEV));
+    CONFIG.set(|| ConfigLoader::load_config());
     let config = CONFIG.get();
     println!("Server config: \n{:?}", config);
 
@@ -51,7 +55,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Error while creating the database connection pool");
 
     // Wire up the DI container
-    use crate::services::token_generators::jwt_access_token_generator::JwtAccessTokenGeneratorParameters;
+    use crate::services::token_services::token_generators::{
+        jwt_access_token_generator::JwtAccessTokenGeneratorParameters,
+        jwt_refresh_token_generator::JwtRefreshTokenGeneratorParameters,
+    };
     use crate::services::user_repos::database_user_repo::DatabaseUserRepoParameters;
     AUTH_MODULE.set(
         AuthModule::builder()
@@ -67,6 +74,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         config.jwt_settings.access_token_key.as_bytes(),
                     ),
                     expiration: config.jwt_settings.access_token_expiration_minutes,
+                },
+            )
+            .with_component_parameters::<JwtRefreshTokenGenerator>(
+                JwtRefreshTokenGeneratorParameters {
+                    issuer: config.jwt_settings.issuer.clone(),
+                    key: jwt_simple::prelude::HS256Key::from_bytes(
+                        config.jwt_settings.refresh_token_key.as_bytes(),
+                    ),
+                    expiration: config.jwt_settings.refresh_token_expiration_minutes,
                 },
             )
             .build(),
