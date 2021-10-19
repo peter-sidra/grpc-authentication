@@ -8,6 +8,8 @@ pub mod proto_gen {
 use proto_gen::{greeter_server::Greeter, HelloReply, HelloRequest};
 use tonic::{Request, Response, Status};
 
+use crate::services::token_services::access_token_claims::AccessTokenClaims;
+
 #[derive(Debug, Default)]
 pub struct MyGreeter {}
 
@@ -17,13 +19,22 @@ impl Greeter for MyGreeter {
         &self,
         request: Request<HelloRequest>,
     ) -> Result<Response<HelloReply>, Status> {
-        // println!("Got a request: {:?}", request);
-
-        let reply = HelloReply {
-            message: format!("Hello {}", request.get_ref().name).into(), // We must use .into_inner() as the fields of gRPC requests and responses are private
+        let claims = match request.extensions().get::<AccessTokenClaims>() {
+            Some(value) => value,
+            None => {
+                eprintln!("Error while accessing claims in say_hello");
+                return Err(Status::new(tonic::Code::Internal, "Internal error"));
+            }
         };
 
-        // Ok::<Response<HelloReply>, Status>(Response::new(reply.clone()))
+        let reply = HelloReply {
+            message: format!(
+                "Hello {}, your email is {}",
+                request.get_ref().name,
+                claims.email
+            )
+            .into(), // We must use .into_inner() as the fields of gRPC requests and responses are private
+        };
 
         Ok(Response::new(reply)) // Send back our formatted greeting
     }

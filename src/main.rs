@@ -18,7 +18,8 @@ use state::LocalStorage;
 use tonic::transport::Server;
 use tonic::transport::ServerTlsConfig;
 
-use crate::di::di_wireup;
+use crate::di::init_services;
+use crate::services::interceptors::access_token_interceptor::check_auth;
 
 // Global config
 static CONFIG: LocalStorage<Config> = LocalStorage::new();
@@ -31,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Server config: \n{:?}", config);
 
     // Wire up the DI container
-    di_wireup(&config);
+    init_services(&config);
 
     // Build the server
     let addr = config.server_addr.parse()?;
@@ -54,8 +55,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("Error while configuring TLS");
     }
 
+    let greeter_server = GreeterServer::with_interceptor(MyGreeter::default(), check_auth);
+
     server
-        .add_service(GreeterServer::new(MyGreeter::default()))
+        .add_service(greeter_server)
         .add_service(AuthenticatorServer::new(MyAuthenticator::default()))
         .serve(addr)
         .await?;

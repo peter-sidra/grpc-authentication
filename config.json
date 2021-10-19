@@ -21,7 +21,7 @@
 		"jwt_settings": {
 			"issuer": "http://localhost:5000",
 			"access_token_key": "cneTgPm7QcfRuEt1d0Mb/QfS2OUy95Xap9goBfTAqsY=",
-			"access_token_expiration_minutes": 15,
+			"access_token_expiration_minutes": 1,
 			"refresh_token_key": "QAxMM7/oCPoCvYJAn2UDWdYcj+iXFOqKpn+fYu/ADgE=",
 			"refresh_token_expiration_minutes": 43200
 		},

@@ -471,6 +471,7 @@ dependencies = [
 name = "grpc-authentication"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "diesel",
  "dotenv",
  "figment",

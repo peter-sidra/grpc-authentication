@@ -19,6 +19,7 @@ jwt-simple = "0.10.6"
 diesel = { version = "^1.4", features = ["sqlite", "postgres", "r2d2"] }
 libsqlite3-sys = { version = ">=0.8.0, <0.23.0", features = ["bundled"] }
 dotenv = "0.15.0"
+anyhow = "1.0.44"
 
 [build-dependencies]
 tonic-build = { version = "0.5.2", features = ["prost", "compression"] }
