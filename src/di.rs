@@ -3,6 +3,7 @@ use crate::{
     config_loader::Config,
     services::{
         password_hashers::scrypt_hasher::ScryptHasher,
+        refresh_token_repos::database_refresh_token_repo::DatabaseRefreshTokenRepo,
         token_services::{
             jwt_token_parameters::JwtTokenParameters,
             token_authenticator::TokenAuthenticatorImpl,
@@ -10,7 +11,10 @@ use crate::{
                 jwt_access_token_generator::JwtAccessTokenGenerator,
                 jwt_refresh_token_generator::JwtRefreshTokenGenerator,
             },
-            token_validators::jwt_access_token_validator::JwtAccessTokenValidator,
+            token_validators::{
+                jwt_access_token_validator::JwtAccessTokenValidator,
+                jwt_refresh_token_validator::JwtRefreshTokenValidator,
+            },
         },
         user_repos::database_user_repo::DatabaseUserRepo,
     },
@@ -22,9 +26,9 @@ use state::Storage;
 // Init DI container
 module! {
     pub AuthModule{
-        components = [DBConnectionPool, DatabaseUserRepo, ScryptHasher,
-                      JwtAccessTokenGenerator, JwtRefreshTokenGenerator,
-                      JwtAccessTokenValidator, TokenAuthenticatorImpl],
+        components = [DBConnectionPool, DatabaseUserRepo, DatabaseRefreshTokenRepo,
+                      ScryptHasher, JwtAccessTokenGenerator, JwtRefreshTokenGenerator,
+                      JwtAccessTokenValidator, JwtRefreshTokenValidator, TokenAuthenticatorImpl],
         providers = [],
     }
 }
@@ -49,11 +53,11 @@ pub fn init_services(config: &Config) {
     };
 
     // Setup jwt verification parameters
-    let mut jwt_access_token_verification_options = VerificationOptions::default();
-    jwt_access_token_verification_options.allowed_issuers =
-        Some(std::collections::HashSet::from_strings(&[
-            jwt_access_token_parameters.issuer.as_str(),
-        ]));
+    let mut jwt_verification_options = VerificationOptions::default();
+    jwt_verification_options.time_tolerance = Some(Duration::from_secs(0));
+    jwt_verification_options.allowed_issuers = Some(std::collections::HashSet::from_strings(&[
+        jwt_access_token_parameters.issuer.as_str(),
+    ]));
 
     // Wire up the DI container
     use crate::services::password_hashers::scrypt_hasher::ScryptHasherParameters;
@@ -62,6 +66,7 @@ pub fn init_services(config: &Config) {
         jwt_refresh_token_generator::JwtRefreshTokenGeneratorParameters,
     };
     use crate::services::token_services::token_validators::jwt_access_token_validator::JwtAccessTokenValidatorParameters;
+    use crate::services::token_services::token_validators::jwt_refresh_token_validator::JwtRefreshTokenValidatorParameters;
     AUTH_MODULE.set(
         AuthModule::builder()
             // Setup the access token generator
@@ -76,13 +81,19 @@ pub fn init_services(config: &Config) {
             )
             .with_component_parameters::<JwtRefreshTokenGenerator>(
                 JwtRefreshTokenGeneratorParameters {
-                    jwt_parameters: jwt_refresh_token_parameters,
+                    jwt_parameters: jwt_refresh_token_parameters.clone(),
                 },
             )
             .with_component_parameters::<JwtAccessTokenValidator>(
                 JwtAccessTokenValidatorParameters {
                     jwt_parameters: jwt_access_token_parameters,
-                    verification_options: jwt_access_token_verification_options,
+                    verification_options: jwt_verification_options.clone(),
+                },
+            )
+            .with_component_parameters::<JwtRefreshTokenValidator>(
+                JwtRefreshTokenValidatorParameters {
+                    jwt_parameters: jwt_refresh_token_parameters,
+                    verification_options: jwt_verification_options,
                 },
             )
             .build(),

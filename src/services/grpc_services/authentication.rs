@@ -4,15 +4,19 @@ pub mod proto_gen {
 
 use crate::{
     di::AUTH_MODULE,
-    models::user::NewUser,
-    services::password_hashers::hasher::PasswordHasher as MyPasswordHasher,
+    models::{refresh_token::NewRefreshToken, user::NewUser},
+    services::{
+        password_hashers::hasher::PasswordHasher as MyPasswordHasher,
+        refresh_token_repos::refresh_token_repo::RefreshTokenRepo,
+        token_services::token_validators::access_token_validator::AccessTokenValidator,
+    },
     services::{
         token_services::token_authenticator::TokenAuthenticator, user_repos::user_repo::UserRepo,
     },
 };
 use proto_gen::{
-    authenticator_server::Authenticator, LoginRequest, LoginResponse, RegisterRequest,
-    RegisterResponse,
+    authenticator_server::Authenticator, LoginRequest, LoginResponse, LogoutRequest,
+    LogoutResponse, RegisterRequest, RegisterResponse,
 };
 use shaku::HasComponent;
 use tonic::{Code, Request, Response, Status};
@@ -56,8 +60,8 @@ impl Authenticator for MyAuthenticator {
         match result {
             Ok(_) => Ok(Response::new(RegisterResponse::default())),
             Err(err) => match err {
-                crate::services::user_repos::user_repo::Error::UniqueViolation => {
-                    Err(Status::new(Code::Unknown, "User already exists"))
+                crate::services::repo_error::Error::UniqueViolation => {
+                    Err(Status::new(Code::AlreadyExists, "User already exists"))
                 }
                 _ => Err(Status::new(Code::Unknown, "Error while creating the user")),
             },
@@ -97,12 +101,53 @@ impl Authenticator for MyAuthenticator {
             ));
         }
 
-        let access_token = token_authenticator.generate_access_token(user);
+        // Create and store the refresh token
         let refresh_token = token_authenticator.generate_refresh_token();
+        let refresh_token_repo: &dyn RefreshTokenRepo = AUTH_MODULE.get().resolve_ref();
+
+        if let Err(_) = refresh_token_repo
+            .create(NewRefreshToken {
+                token: refresh_token.clone(),
+                user_id: user.id.clone(),
+            })
+            .await
+        {
+            return Err(Status::unknown(""));
+        }
+
+        // Create the access token
+        let access_token = token_authenticator.generate_access_token(user);
 
         Ok(Response::new(LoginResponse {
             access_token,
             refresh_token,
         }))
+    }
+
+    // This invalidates all of the refresh tokens belonging to the user
+    async fn logout(
+        &self,
+        request: Request<LogoutRequest>,
+    ) -> Result<Response<LogoutResponse>, Status> {
+        let access_token = &request.get_ref().access_token;
+
+        let access_token_validator: &dyn AccessTokenValidator = AUTH_MODULE.get().resolve_ref();
+
+        let validation_result = access_token_validator.validate_token(access_token);
+
+        let claims = match validation_result {
+            Ok(value) => value,
+            Err(_) => return Err(Status::permission_denied("")),
+        };
+
+        let user_id = claims.id;
+
+        let refresh_token_repo: &dyn RefreshTokenRepo = AUTH_MODULE.get().resolve_ref();
+
+        if let Err(_) = refresh_token_repo.delete_all_by_user_id(user_id).await {
+            return Err(Status::unknown(""));
+        }
+
+        Ok(Response::new(LogoutResponse {}))
     }
 }
