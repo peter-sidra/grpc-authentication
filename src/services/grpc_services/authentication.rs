@@ -8,7 +8,13 @@ use crate::{
     services::{
         password_hashers::hasher::PasswordHasher as MyPasswordHasher,
         refresh_token_repos::refresh_token_repo::RefreshTokenRepo,
-        token_services::token_validators::access_token_validator::AccessTokenValidator,
+        token_services::{
+            token_generators::refresh_token_generator::RefreshTokenGenerator,
+            token_validators::{
+                access_token_validator::AccessTokenValidator,
+                refresh_token_validator::RefreshTokenValidator,
+            },
+        },
     },
     services::{
         token_services::token_authenticator::TokenAuthenticator, user_repos::user_repo::UserRepo,
@@ -16,7 +22,7 @@ use crate::{
 };
 use proto_gen::{
     authenticator_server::Authenticator, LoginRequest, LoginResponse, LogoutRequest,
-    LogoutResponse, RegisterRequest, RegisterResponse,
+    LogoutResponse, RefreshRequest, RefreshResponse, RegisterRequest, RegisterResponse,
 };
 use shaku::HasComponent;
 use tonic::{Code, Request, Response, Status};
@@ -149,5 +155,47 @@ impl Authenticator for MyAuthenticator {
         }
 
         Ok(Response::new(LogoutResponse {}))
+    }
+
+    async fn refresh(
+        &self,
+        request: Request<RefreshRequest>,
+    ) -> Result<Response<RefreshResponse>, Status> {
+        let refresh_token_validator: &dyn RefreshTokenValidator = AUTH_MODULE.get().resolve_ref();
+        let refresh_token_repo: &dyn RefreshTokenRepo = AUTH_MODULE.get().resolve_ref();
+        let refresh_token_generator: &dyn RefreshTokenGenerator = AUTH_MODULE.get().resolve_ref();
+
+        let request_refresh_token = &request.get_ref().refresh_token;
+
+        if let Err(_) = refresh_token_validator.validate_token(request_refresh_token) {
+            return Err(Status::permission_denied("Invalid refresh token"));
+        };
+
+        let db_refresh_token = match refresh_token_repo
+            .get_by_token(request_refresh_token.to_owned())
+            .await
+        {
+            Ok(token) => token,
+            Err(_) => return Err(Status::permission_denied("Invalid refresh token")),
+        };
+
+        if let Err(_) = refresh_token_repo.delete(db_refresh_token.id).await {
+            return Err(Status::internal(""));
+        }
+
+        let new_refresh_token = refresh_token_generator.generate_token();
+        if let Err(_) = refresh_token_repo
+            .create(NewRefreshToken {
+                token: new_refresh_token.clone(),
+                user_id: db_refresh_token.user_id,
+            })
+            .await
+        {
+            return Err(Status::internal(""));
+        }
+
+        Ok(Response::new(RefreshResponse {
+            refresh_token: new_refresh_token,
+        }))
     }
 }
