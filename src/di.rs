@@ -53,11 +53,13 @@ pub fn init_services(config: &Config) {
     };
 
     // Setup jwt verification parameters
-    let mut jwt_verification_options = VerificationOptions::default();
-    jwt_verification_options.time_tolerance = Some(Duration::from_secs(0));
-    jwt_verification_options.allowed_issuers = Some(std::collections::HashSet::from_strings(&[
-        jwt_access_token_parameters.issuer.as_str(),
-    ]));
+    let jwt_verification_options = jwt_simple::common::VerificationOptions {
+        time_tolerance: Some(Duration::from_secs(0)),
+        allowed_issuers: Some(std::collections::HashSet::from_strings(&[
+            jwt_access_token_parameters.issuer.as_str(),
+        ])),
+        ..Default::default()
+    };
 
     // Wire up the DI container
     use crate::services::password_hashers::scrypt_hasher::ScryptHasherParameters;

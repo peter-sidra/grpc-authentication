@@ -36,10 +36,9 @@ impl super::hasher::PasswordHasher for ScryptHasher {
             let password_hash = PasswordHash::new(hash.as_str())
                 .expect("Error while converting string hash to PasswordHash");
 
-            match Scrypt.verify_password(password.as_bytes(), &password_hash) {
-                Ok(_) => true,
-                Err(_) => false,
-            }
+            Scrypt
+                .verify_password(password.as_bytes(), &password_hash)
+                .is_ok()
         });
 
         password_verification_task

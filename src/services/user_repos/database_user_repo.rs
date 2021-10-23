@@ -32,7 +32,7 @@ impl UserRepo for DatabaseUserRepo {
             diesel::insert_into(users::table)
                 .values(&user)
                 .execute(&db_conn)
-                .map_err(|err| repo_error::Error::map_diesel_err(err))
+                .map_err(repo_error::Error::map_diesel_err)
         });
 
         task.await
@@ -48,7 +48,7 @@ impl UserRepo for DatabaseUserRepo {
             users::table
                 .filter(users::id.eq(id.to_string()))
                 .first::<User>(&db_conn)
-                .map_err(|err| repo_error::Error::map_diesel_err(err))
+                .map_err(repo_error::Error::map_diesel_err)
         });
 
         task.await
@@ -64,7 +64,7 @@ impl UserRepo for DatabaseUserRepo {
             users::table
                 .filter(users::email.eq(email))
                 .first(&db_conn)
-                .map_err(|err| repo_error::Error::map_diesel_err(err))
+                .map_err(repo_error::Error::map_diesel_err)
         });
 
         task.await

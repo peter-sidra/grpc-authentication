@@ -1,5 +1,6 @@
 {
 	"cSpell.words": ["dotenv", "Hasher", "proto", "Scrypt", "shaku"],
 
-	"rust-analyzer.procMacro.enable": false
+	"rust-analyzer.procMacro.enable": false,
+	"rust-analyzer.checkOnSave.command": "clippy"
 }

@@ -32,8 +32,7 @@ impl Greeter for MyGreeter {
                 "Hello {}, your email is {}",
                 request.get_ref().name,
                 claims.email
-            )
-            .into(), // We must use .into_inner() as the fields of gRPC requests and responses are private
+            ),
         };
 
         Ok(Response::new(reply)) // Send back our formatted greeting

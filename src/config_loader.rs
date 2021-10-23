@@ -40,7 +40,7 @@ impl ConfigLoader {
     pub fn load_config() -> Config {
         dotenv::dotenv().ok();
 
-        let profile = std::env::var("PROFILE").unwrap_or(Profiles::DEV.to_string());
+        let profile = std::env::var("PROFILE").unwrap_or_else(|_| Profiles::DEV.to_string());
 
         Figment::new()
             .select(profile)

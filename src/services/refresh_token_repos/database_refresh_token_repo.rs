@@ -33,7 +33,7 @@ impl RefreshTokenRepo for DatabaseRefreshTokenRepo {
             diesel::insert_into(refresh_tokens::table)
                 .values(&token)
                 .execute(&db_conn)
-                .map_err(|err| repo_error::Error::map_diesel_err(err))
+                .map_err(repo_error::Error::map_diesel_err)
         });
 
         match task.await {
@@ -54,7 +54,7 @@ impl RefreshTokenRepo for DatabaseRefreshTokenRepo {
             refresh_tokens::table
                 .filter(refresh_tokens::token.eq(token))
                 .first::<RefreshToken>(&db_conn)
-                .map_err(|err| repo_error::Error::map_diesel_err(err))
+                .map_err(repo_error::Error::map_diesel_err)
         });
 
         match task.await {
@@ -75,7 +75,7 @@ impl RefreshTokenRepo for DatabaseRefreshTokenRepo {
             diesel::delete(refresh_tokens::table)
                 .filter(refresh_tokens::id.eq(id))
                 .execute(&db_conn)
-                .map_err(|err| repo_error::Error::map_diesel_err(err))
+                .map_err(repo_error::Error::map_diesel_err)
         });
 
         match task.await {
@@ -96,7 +96,7 @@ impl RefreshTokenRepo for DatabaseRefreshTokenRepo {
             diesel::delete(refresh_tokens::table)
                 .filter(refresh_tokens::user_id.eq(user_id))
                 .execute(&db_conn)
-                .map_err(|err| repo_error::Error::map_diesel_err(err))
+                .map_err(repo_error::Error::map_diesel_err)
         });
 
         match task.await {

@@ -49,8 +49,8 @@ impl Authenticator for MyAuthenticator {
         let password = &request.get_ref().password;
 
         // check if the user already exists
-        if let Ok(_) = user_repo.get_by_email(email.clone()).await {
-            return Err(Status::new(Code::Unknown, "User already exists"));
+        if user_repo.get_by_email(email.clone()).await.is_ok() {
+            return Err(Status::new(Code::AlreadyExists, "User already exists"));
         }
 
         let password_hash = password_hasher.hash_password(password.clone()).await;
@@ -111,12 +111,13 @@ impl Authenticator for MyAuthenticator {
         let refresh_token = token_authenticator.generate_refresh_token();
         let refresh_token_repo: &dyn RefreshTokenRepo = AUTH_MODULE.get().resolve_ref();
 
-        if let Err(_) = refresh_token_repo
+        if refresh_token_repo
             .create(NewRefreshToken {
                 token: refresh_token.clone(),
                 user_id: user.id.clone(),
             })
             .await
+            .is_err()
         {
             return Err(Status::unknown(""));
         }
@@ -150,7 +151,11 @@ impl Authenticator for MyAuthenticator {
 
         let refresh_token_repo: &dyn RefreshTokenRepo = AUTH_MODULE.get().resolve_ref();
 
-        if let Err(_) = refresh_token_repo.delete_all_by_user_id(user_id).await {
+        if refresh_token_repo
+            .delete_all_by_user_id(user_id)
+            .await
+            .is_err()
+        {
             return Err(Status::unknown(""));
         }
 
@@ -167,7 +172,10 @@ impl Authenticator for MyAuthenticator {
 
         let request_refresh_token = &request.get_ref().refresh_token;
 
-        if let Err(_) = refresh_token_validator.validate_token(request_refresh_token) {
+        if refresh_token_validator
+            .validate_token(request_refresh_token)
+            .is_err()
+        {
             return Err(Status::permission_denied("Invalid refresh token"));
         };
 
@@ -179,17 +187,22 @@ impl Authenticator for MyAuthenticator {
             Err(_) => return Err(Status::permission_denied("Invalid refresh token")),
         };
 
-        if let Err(_) = refresh_token_repo.delete(db_refresh_token.id).await {
+        if refresh_token_repo
+            .delete(db_refresh_token.id)
+            .await
+            .is_err()
+        {
             return Err(Status::internal(""));
         }
 
         let new_refresh_token = refresh_token_generator.generate_token();
-        if let Err(_) = refresh_token_repo
+        if refresh_token_repo
             .create(NewRefreshToken {
                 token: new_refresh_token.clone(),
                 user_id: db_refresh_token.user_id,
             })
             .await
+            .is_err()
         {
             return Err(Status::internal(""));
         }

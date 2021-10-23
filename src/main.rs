@@ -27,12 +27,12 @@ static CONFIG: LocalStorage<Config> = LocalStorage::new();
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load server configuration from config file
-    CONFIG.set(|| ConfigLoader::load_config());
+    CONFIG.set(ConfigLoader::load_config);
     let config = CONFIG.get();
     println!("Server config: \n{:?}", config);
 
     // Wire up the DI container
-    init_services(&config);
+    init_services(config);
 
     // Build the server
     let addr = config.server_addr.parse()?;
