@@ -1,24 +1,22 @@
 use crate::connection_pool_wrapper::DBConnectionPool;
-use crate::{
-    config_loader::Config,
-    services::{
-        password_hashers::scrypt_hasher::ScryptHasher,
-        refresh_token_repos::database_refresh_token_repo::DatabaseRefreshTokenRepo,
-        token_services::{
-            jwt_token_parameters::JwtTokenParameters,
-            token_authenticator::TokenAuthenticatorImpl,
-            token_generators::{
-                jwt_access_token_generator::JwtAccessTokenGenerator,
-                jwt_refresh_token_generator::JwtRefreshTokenGenerator,
-            },
-            token_validators::{
-                jwt_access_token_validator::JwtAccessTokenValidator,
-                jwt_refresh_token_validator::JwtRefreshTokenValidator,
-            },
+use crate::services::{
+    password_hashers::scrypt_hasher::ScryptHasher,
+    refresh_token_repos::database_refresh_token_repo::DatabaseRefreshTokenRepo,
+    token_services::{
+        jwt_token_parameters::JwtTokenParameters,
+        token_authenticator::TokenAuthenticatorImpl,
+        token_generators::{
+            jwt_access_token_generator::JwtAccessTokenGenerator,
+            jwt_refresh_token_generator::JwtRefreshTokenGenerator,
         },
-        user_repos::database_user_repo::DatabaseUserRepo,
+        token_validators::{
+            jwt_access_token_validator::JwtAccessTokenValidator,
+            jwt_refresh_token_validator::JwtRefreshTokenValidator,
+        },
     },
+    user_repos::database_user_repo::DatabaseUserRepo,
 };
+use config::Config;
 use jwt_simple::prelude::*;
 use shaku::module;
 use state::Storage;

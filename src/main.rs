@@ -1,15 +1,13 @@
 #[macro_use]
 extern crate diesel;
 
-mod config_loader;
 mod connection_pool_wrapper;
 mod di;
 mod models;
 mod schema;
 mod services;
 
-use config_loader::Config;
-use config_loader::ConfigLoader;
+use config::{Config, ConfigLoader};
 use services::grpc_services::authentication::{
     proto_gen::authenticator_server::AuthenticatorServer, MyAuthenticator,
 };

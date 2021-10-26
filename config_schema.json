@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Config",
+  "type": "object",
+  "required": [
+    "cert_path",
+    "jwt_settings",
+    "key_path",
+    "password_work_factor",
+    "server_addr",
+    "use_tls"
+  ],
+  "properties": {
+    "cert_path": {
+      "type": "string"
+    },
+    "jwt_settings": {
+      "$ref": "#/definitions/JwtSettings"
+    },
+    "key_path": {
+      "type": "string"
+    },
+    "password_work_factor": {
+      "type": "integer",
+      "format": "uint8",
+      "minimum": 0.0
+    },
+    "server_addr": {
+      "type": "string"
+    },
+    "use_tls": {
+      "type": "boolean"
+    }
+  },
+  "definitions": {
+    "JwtSettings": {
+      "type": "object",
+      "required": [
+        "access_token_expiration_minutes",
+        "access_token_key",
+        "issuer",
+        "refresh_token_expiration_minutes",
+        "refresh_token_key"
+      ],
+      "properties": {
+        "access_token_expiration_minutes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "access_token_key": {
+          "type": "string"
+        },
+        "issuer": {
+          "type": "string"
+        },
+        "refresh_token_expiration_minutes": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "refresh_token_key": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

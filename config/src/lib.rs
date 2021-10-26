@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use figment::{
@@ -5,18 +6,19 @@ use figment::{
     Figment,
 };
 
-#[derive(Deserialize, Debug)]
+#[derive(JsonSchema, Deserialize, Debug)]
 pub struct Config {
     pub key_path: String,
     pub cert_path: String,
     pub server_addr: String,
     pub use_tls: bool,
+    #[schemars(skip)]
     pub database_url: String,
     pub jwt_settings: JwtSettings,
     pub password_work_factor: u8,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(JsonSchema, Deserialize, Debug)]
 pub struct JwtSettings {
     pub issuer: String,
     pub access_token_key: String,
@@ -25,28 +27,26 @@ pub struct JwtSettings {
     pub refresh_token_expiration_minutes: u32,
 }
 
-#[non_exhaustive]
-pub struct Profiles;
-
-#[allow(dead_code)]
-impl Profiles {
-    pub const PROD: &'static str = "prod";
-    pub const DEV: &'static str = "dev";
-}
-
 pub struct ConfigLoader {}
 
 impl ConfigLoader {
     pub fn load_config() -> Config {
         dotenv::dotenv().ok();
 
-        let profile = std::env::var("PROFILE").unwrap_or_else(|_| Profiles::DEV.to_string());
+        let profile = std::env::var("PROFILE").unwrap_or_else(|_| "dev".to_owned());
 
         Figment::new()
-            .select(profile)
-            .merge(Json::file("config.json").nested())
+            .merge(Json::file(format!("config.{}.json", profile)))
             .merge(Env::raw().only(&["DATABASE_URL"]))
             .extract()
             .expect("Error while loading the config file")
     }
+}
+
+pub fn write_schema_to_disk(path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let schema = schemars::schema_for!(Config);
+    let serialized_schema = serde_json::to_string_pretty(&schema)?;
+    std::fs::write(path, serialized_schema)?;
+
+    Ok(())
 }
