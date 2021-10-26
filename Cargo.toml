@@ -1,13 +1,13 @@
 [package]
 name = "grpc-authentication"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tonic = { version = "0.5.2", features = ["tls", "tls-roots", "compression"] }
-prost = "^0.8"
+tonic = { version = "^0.6", features = ["tls", "tls-roots", "compression"] }
+prost = "^0.9"
 tokio = { version = "1.12.0", features = ["macros", "rt-multi-thread", "fs"] }
 serde = { version = "1.0.130", features = ["derive"] }
 shaku = "0.6.1"
@@ -16,11 +16,11 @@ uuid = { version = "^0.8", features = ["serde", "v4"] }
 scrypt = "0.8.0"
 jwt-simple = "0.10.6"
 diesel = { version = "^1.4", features = ["sqlite", "postgres", "r2d2"] }
-libsqlite3-sys = { version = ">=0.8.0, <0.23.0", features = ["bundled"] }
+libsqlite3-sys = { version = ">=0.8.0, <0.24.0", features = ["bundled"] }
 dotenv = "0.15.0"
 anyhow = "1.0.44"
 config = { path = "config" }
 
 [build-dependencies]
-tonic-build = { version = "0.5.2", features = ["prost", "compression"] }
+tonic-build = { version = "^0.6", features = ["prost", "compression"] }
 config = { path = "config" }
