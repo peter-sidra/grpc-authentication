@@ -1,8 +1,9 @@
-use jwt_simple::prelude::HS256Key;
+use jsonwebtoken::{DecodingKey, EncodingKey};
 
 #[derive(Clone)]
 pub struct JwtTokenParameters {
     pub issuer: String,
-    pub key: HS256Key,
+    pub encoding_key: EncodingKey,
+    pub decoding_key: DecodingKey<'static>,
     pub expiration: u32,
 }

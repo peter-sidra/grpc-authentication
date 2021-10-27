@@ -17,7 +17,7 @@ use crate::services::{
     user_repos::database_user_repo::DatabaseUserRepo,
 };
 use config::Config;
-use jwt_simple::prelude::*;
+use jsonwebtoken::{DecodingKey, EncodingKey, Validation};
 use shaku::module;
 use state::Storage;
 
@@ -36,26 +36,33 @@ pub fn init_services(config: &Config) {
     // Setup jwt parameters
     let jwt_access_token_parameters = JwtTokenParameters {
         issuer: config.jwt_settings.issuer.clone(),
-        key: jwt_simple::prelude::HS256Key::from_bytes(
-            config.jwt_settings.access_token_key.as_bytes(),
-        ),
+        encoding_key: EncodingKey::from_base64_secret(
+            config.jwt_settings.access_token_key.as_str(),
+        )
+        .expect("Failed to load the jwt access token secret"),
+        decoding_key: DecodingKey::from_base64_secret(
+            config.jwt_settings.access_token_key.as_str(),
+        )
+        .expect("Failed to load the jwt access token secret"),
         expiration: config.jwt_settings.access_token_expiration_minutes,
     };
 
     let jwt_refresh_token_parameters = JwtTokenParameters {
         issuer: config.jwt_settings.issuer.clone(),
-        key: jwt_simple::prelude::HS256Key::from_bytes(
-            config.jwt_settings.refresh_token_key.as_bytes(),
-        ),
+        encoding_key: EncodingKey::from_base64_secret(
+            config.jwt_settings.refresh_token_key.as_str(),
+        )
+        .expect("Failed to load the jwt refresh token secret"),
+        decoding_key: DecodingKey::from_base64_secret(
+            config.jwt_settings.refresh_token_key.as_str(),
+        )
+        .expect("Failed to load the jwt refresh token secret"),
         expiration: config.jwt_settings.refresh_token_expiration_minutes,
     };
 
     // Setup jwt verification parameters
-    let jwt_verification_options = jwt_simple::common::VerificationOptions {
-        time_tolerance: Some(Duration::from_secs(0)),
-        allowed_issuers: Some(std::collections::HashSet::from_strings(&[
-            jwt_access_token_parameters.issuer.as_str(),
-        ])),
+    let jwt_verification_options = Validation {
+        iss: Some(config.jwt_settings.issuer.clone()),
         ..Default::default()
     };
 
